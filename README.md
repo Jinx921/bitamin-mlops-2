@@ -48,3 +48,16 @@ docker run bitamin-mlops-1
 Telco Customer Churn (`WA_FnUseC_TelcoCustomerChurn.csv`)
 - 7,043행 21열, 타깃 컬럼: `Churn`
 - `TotalCharges` 컬럼에 공백 문자로 된 결측치가 있어 전처리 시 숫자 변환 및 결측치 제거 필요
+
+---
+
+## 심화 체크포인트
+
+### 심화 1: 빌드한 이미지를 Docker Hub에 push
+**명령어**: `docker tag bitamin-mlops-1 moonchowon/bitamin-mlops-1` / `docker push moonchowon/bitamin-mlops-1`
+**결과**: Docker Hub에 `moonchowon/bitamin-mlops-1` 이미지 업로드 완료
+**pull 방법**: `docker pull moonchowon/bitamin-mlops-1`
+
+### 심화 2: .dockerignore 적용으로 이미지 용량 축소
+**명령어**: `.dockerignore` 작성 후 `docker build -t bitamin-mlops-1-v2 .`
+**결과**: 불필요 파일(캐시, git 관련 등) 제외 설정 반영
