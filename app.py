@@ -6,6 +6,8 @@ from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, f1_score
 
 # 1. 데이터 로드
@@ -44,6 +46,29 @@ preprocessor = ColumnTransformer([
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42
 )
+
+# Logistic Regression
+lr_model = LogisticRegression(max_iter=1000)
+lr_model.fit(X_train, y_train)
+
+lr_pred = lr_model.predict(X_test)
+lr_acc = accuracy_score(y_test, lr_pred)
+
+# Random Forest
+rf_model = RandomForestClassifier(
+    n_estimators=200,
+    class_weight="balanced",
+    random_state=42,
+    n_jobs=-1
+)
+
+rf_model.fit(X_train, y_train)
+
+rf_pred = rf_model.predict(X_test)
+rf_acc = accuracy_score(y_test, rf_pred)
+
+print(f"Logistic Regression Accuracy: {lr_acc:.4f}")
+print(f"Random Forest Accuracy: {rf_acc:.4f}")
 
 X_train = preprocessor.fit_transform(X_train)
 X_test = preprocessor.transform(X_test)
