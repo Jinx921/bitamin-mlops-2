@@ -1,4 +1,4 @@
-# BITAMIN 17기 MLOps 프로젝트 - 2조
+# BITAmin 17기 MLOps 프로젝트 - 2조
 
 > **Telco Customer Churn 데이터를 활용한 고객 이탈 방지 서비스 구축**
 

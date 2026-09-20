@@ -19,5 +19,3 @@ artifacts/
 wandb/
 *.joblib
 *.pkl
-
-.dockerignore
