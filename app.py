@@ -1,137 +1,134 @@
+"""BITAmin MLOps 2주차 통합 스냅샷.
+
+1주차의 재현 가능한 실행 환경 위에 다음 협업 결과를 합친 상태다.
+- 데이터 전처리
+- Logistic Regression
+- Random Forest
+- 공통 평가 지표
+"""
+
+from pathlib import Path
+
 import pandas as pd
-from sklearn.model_selection import train_test_split
 from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import Pipeline
-from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
-from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, f1_score
-
-# 1. 데이터 로드
-df = pd.read_csv("WA_FnUseC_TelcoCustomerChurn.csv")
-
-# 2. 학습에 사용하지 않을 컬럼 제거
-df = df.drop(columns=["customerID"])
-
-# 3. TotalCharges 숫자형 변환
-# 변환할 수 없는 공백 값은 NaN으로 처리
-df["TotalCharges"] = pd.to_numeric(
-    df["TotalCharges"],
-    errors="coerce"
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    accuracy_score,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
 )
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
-# 4. 입력(X)과 타깃(y) 분리
-X = df.drop(columns=["Churn"])
-y = df["Churn"].map({
-    "No": 0,
-    "Yes": 1
-})
 
-# 수치형 / 범주형 컬럼 구분
-numeric_cols = X.select_dtypes(
-    include=["int64", "float64"]
-).columns
+DATA_PATH = Path(__file__).with_name("WA_FnUseC_TelcoCustomerChurn.csv")
+RANDOM_STATE = 42
 
-categorical_cols = X.select_dtypes(
-    include=["object"]
-).columns
 
-# 수치형 전처리
-numeric_transformer = Pipeline([
-    ("imputer", SimpleImputer(strategy="median")),
-    ("scaler", StandardScaler()),
-])
+def load_data(path: Path) -> tuple[pd.DataFrame, pd.Series]:
+    """CSV를 불러와 학습 입력과 타깃으로 분리한다."""
+    df = pd.read_csv(path)
 
-# 범주형 전처리
-categorical_transformer = Pipeline([
-    ("imputer", SimpleImputer(strategy="most_frequent")),
-    ("onehot", OneHotEncoder(handle_unknown="ignore")),
-])
+    # customerID는 식별자이므로 학습에서 제외한다.
+    df = df.drop(columns=["customerID"])
 
-# 전체 전처리 Pipeline
-preprocessor = ColumnTransformer([
-    ("num", numeric_transformer, numeric_cols),
-    ("cat", categorical_transformer, categorical_cols),
-])
+    # 원본 데이터의 TotalCharges에는 공백 문자열이 포함되어 있다.
+    df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors="coerce")
 
-# 5. 학습 / 테스트 데이터 분리
-X_train, X_test, y_train, y_test = train_test_split(
-    X,
-    y,
-    test_size=0.2,
-    random_state=42,
-    stratify=y
-)
+    X = df.drop(columns=["Churn"])
+    y = df["Churn"].map({"No": 0, "Yes": 1})
+    return X, y
 
-# 6. 전처리
-# train 데이터로만 전처리기를 학습
-X_train_processed = preprocessor.fit_transform(X_train)
 
-# test 데이터에는 train에서 학습한 전처리 적용
-X_test_processed = preprocessor.transform(X_test)
+def build_preprocessor(X: pd.DataFrame) -> ColumnTransformer:
+    """수치형과 범주형 컬럼에 서로 다른 전처리를 적용한다."""
+    categorical_columns = X.select_dtypes(include=["object", "category"]).columns
+    numeric_columns = X.select_dtypes(exclude=["object", "category"]).columns
 
-# 7. Logistic Regression 학습
-lr_model = LogisticRegression(
-    max_iter=1000,
-    class_weight="balanced",
-    random_state=42
-)
+    numeric_pipeline = Pipeline(
+        steps=[
+            ("imputer", SimpleImputer(strategy="median")),
+            ("scaler", StandardScaler()),
+        ]
+    )
+    categorical_pipeline = Pipeline(
+        steps=[
+            ("imputer", SimpleImputer(strategy="most_frequent")),
+            ("onehot", OneHotEncoder(handle_unknown="ignore")),
+        ]
+    )
 
-lr_model.fit(
-    X_train_processed,
-    y_train
-)
+    return ColumnTransformer(
+        transformers=[
+            ("numeric", numeric_pipeline, numeric_columns),
+            ("categorical", categorical_pipeline, categorical_columns),
+        ]
+    )
 
-lr_pred = lr_model.predict(
-    X_test_processed
-)
 
-# 8. Random Forest 학습
-rf_model = RandomForestClassifier(
-    n_estimators=200,
-    class_weight="balanced",
-    random_state=42,
-    n_jobs=-1
-)
+def build_models() -> dict[str, object]:
+    """2주차에 통합한 비교 모델을 반환한다."""
+    return {
+        "Logistic Regression": LogisticRegression(
+            max_iter=1000,
+            class_weight="balanced",
+            random_state=RANDOM_STATE,
+        ),
+        "Random Forest": RandomForestClassifier(
+            n_estimators=200,
+            class_weight="balanced",
+            random_state=RANDOM_STATE,
+            n_jobs=-1,
+        ),
+    }
 
-rf_model.fit(
-    X_train_processed,
-    y_train
-)
 
-rf_pred = rf_model.predict(
-    X_test_processed
-)
+def evaluate(y_true: pd.Series, y_pred, y_score) -> dict[str, float]:
+    """불균형한 Churn 데이터에 필요한 공통 지표를 계산한다."""
+    return {
+        "accuracy": accuracy_score(y_true, y_pred),
+        "precision": precision_score(y_true, y_pred, zero_division=0),
+        "recall": recall_score(y_true, y_pred, zero_division=0),
+        "f1": f1_score(y_true, y_pred, zero_division=0),
+        "roc_auc": roc_auc_score(y_true, y_score),
+    }
 
-# 9. 평가
-lr_acc = accuracy_score(
-    y_test,
-    lr_pred
-)
 
-lr_f1 = f1_score(
-    y_test,
-    lr_pred
-)
+def main() -> None:
+    X, y = load_data(DATA_PATH)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X,
+        y,
+        test_size=0.2,
+        random_state=RANDOM_STATE,
+        stratify=y,
+    )
 
-rf_acc = accuracy_score(
-    y_test,
-    rf_pred
-)
+    results: dict[str, dict[str, float]] = {}
 
-rf_f1 = f1_score(
-    y_test,
-    rf_pred
-)
+    for model_name, estimator in build_models().items():
+        pipeline = Pipeline(
+            steps=[
+                ("preprocessor", build_preprocessor(X_train)),
+                ("model", estimator),
+            ]
+        )
+        pipeline.fit(X_train, y_train)
 
-# 10. 결과 출력
-print("=== Logistic Regression ===")
-print(f"Accuracy: {lr_acc:.4f}")
-print(f"F1 Score: {lr_f1:.4f}")
+        y_pred = pipeline.predict(X_test)
+        y_score = pipeline.predict_proba(X_test)[:, 1]
+        results[model_name] = evaluate(y_test, y_pred, y_score)
 
-print()
+    result_table = pd.DataFrame(results).T.sort_values("f1", ascending=False)
+    print("=== Model comparison ===")
+    print(result_table.round(4).to_string())
+    print(f"\nBest model by F1: {result_table.index[0]}")
 
-print("=== Random Forest ===")
-print(f"Accuracy: {rf_acc:.4f}")
-print(f"F1 Score: {rf_f1:.4f}")
+
+if __name__ == "__main__":
+    main()
