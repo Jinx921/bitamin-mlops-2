@@ -2,7 +2,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, f1_score
 
 # 1. 데이터 로드
 df = pd.read_csv("WA_FnUseC_TelcoCustomerChurn.csv")
@@ -40,5 +40,9 @@ model.fit(X_train, y_train)
 
 # 8. 평가
 y_pred = model.predict(X_test)
+
 acc = accuracy_score(y_test, y_pred)
+f1 = f1_score(y_test, y_pred)
+
 print(f"Accuracy: {acc:.4f}")
+print(f"F1 Score: {f1:.4f}")
