@@ -1,63 +1,150 @@
-# 1조 - 1주차 스냅샷 repository
+# BITAMIN 17기 MLOps 프로젝트 - 2조
 
-재현 가능한 ML 개발환경 구축 (WSL/Conda/Docker)
+> **Telco Customer Churn 데이터를 활용한 고객 이탈 방지 서비스 구축**
 
-## 실행 방법
+BITAMIN 17기 MLOps 세션 **2조 공용 Repository**
 
-### 1. 가상환경 생성 및 activate
-conda create -n bitamin-mlops-1 python=3.10 -y
-conda activate bitamin-mlops-1
+하나의 고객 이탈 예측 프로젝트를 기반으로  
+**개발환경 구축 → 협업 → 실험 관리 → 모델 서빙 → CI/CD**까지  
+5주 동안 MLOps의 전체 흐름 경험
 
-### 2. 패키지 설치
+---
+
+## 📚 Curriculum
+
+| Week | Topic | Goal |
+|---|---|---|
+| 1 | 재현 가능한 ML 개발환경 | Conda / Docker 기반 실행환경 구축 |
+| 2 | Git / GitHub 기반 협업 | Branch / PR 기반 협업 |
+| 3 | WandB 실험 관리 | 실험 기록 및 Best Model 선정 |
+| 4 | FastAPI 모델 서빙 | 예측 API 구축 |
+| 5 | Docker + GitHub Actions CI/CD | 테스트 및 배포 자동화 |
+
+5주 동안 동일한 조별 Repository를 계속 사용하며 이전 주차 결과물 위에 다음 실습을 이어감
+
+---
+
+## 📁 Repository Structure
+
+```text
+bitamin-mlops-2/
+├── app.py
+├── requirements.txt
+├── Dockerfile
+├── .gitignore
+├── .dockerignore
+├── WA_FnUseC_TelcoCustomerChurn.csv
+│
+├── week1/
+│   └── README.md
+└── week2/
+    └── README.md
+```
+
+각 주차의 세부 실습 과정과 체크포인트 결과는  
+해당 `weekN/README.md`에 기록
+
+---
+
+## ✅ Week 1 — 재현 가능한 ML 개발환경
+
+- Conda 가상환경 구축
+- Python 3.10 환경 구성
+- `requirements.txt` 기반 패키지 설치
+- Baseline Logistic Regression 실행
+- Docker Image Build
+- Docker Container 실행
+
+---
+
+## ✅ Week 2 — Git / GitHub 기반 협업
+
+각 조원이 별도의 Branch에서 기능을 구현한 뒤  
+Pull Request와 Code Review를 통해 `main`에 통합
+
+| Branch | 작업 |
+|---|---|
+| `feature/preprocessing` | 데이터 전처리 개선 |
+| `feature/logistic-regression` | Logistic Regression 개선 |
+| `feature/random-forest` | Random Forest 추가 |
+| `feature/evaluation-metrics` | 평가 Metric 추가 |
+
+## 🤖 Current Model
+
+현재 `app.py`에는 다음 내용이 통합되어 있음
+
+- `ColumnTransformer` 기반 전처리
+- 결측치 처리
+- One-Hot Encoding / Scaling
+- Logistic Regression
+- Random Forest
+- Accuracy / F1 Score 평가
+
+---
+
+## ▶️ Run
+
+### Conda 환경 활성화
+
+```bash
+conda activate mlops-week1
+```
+
+### 패키지 설치
+
+```bash
 pip install -r requirements.txt
+```
 
-### 3. baseline 모델 실행
+### 모델 실행
+
+```bash
 python app.py
+```
 
-### 4. Docker 이미지 빌드 및 실행
-docker build -t bitamin-mlops-1 .
-docker run bitamin-mlops-1
+실행 결과 예시:
 
----
+```text
+=== Logistic Regression ===
+Accuracy: 0.7381
+F1 Score: 0.6136
 
-## 체크포인트별 결과
-
-### 체크포인트 1: conda 가상환경 생성 및 activate
-**명령어**: `conda create -n bitamin-mlops-1 python=3.10 -y` / `conda activate bitamin-mlops-1`
-**결과**: 프롬프트에 `(bitamin-mlops-1)` 환경명 표시 확인
-
-### 체크포인트 2: requirements.txt 작성 후 설치
-**명령어**: `pip install -r requirements.txt`
-**결과**: pandas, scikit-learn, joblib 및 의존 패키지 정상 설치 확인 (`pip list`)
-
-### 체크포인트 3: baseline 모델 실행
-**명령어**: `python app.py`
-**결과**: `Accuracy: 0.7854`
-
-### 체크포인트 4: Dockerfile 작성 및 이미지 빌드
-**명령어**: `docker build -t bitamin-mlops-1 .`
-**결과**: `docker images`에 `bitamin-mlops-1:latest` (642MB) 표시 확인
-
-### 체크포인트 5: 컨테이너에서 baseline 모델 실행
-**명령어**: `docker run bitamin-mlops-1`
-**결과**: `Accuracy: 0.7854` (conda 환경과 동일한 결과, 컨테이너 재현성 확인)
+=== Random Forest ===
+Accuracy: 0.7850
+F1 Score: 0.5444
+```
 
 ---
 
-## 데이터셋
-Telco Customer Churn (`WA_FnUseC_TelcoCustomerChurn.csv`)
-- 7,043행 21열, 타깃 컬럼: `Churn`
-- `TotalCharges` 컬럼에 공백 문자로 된 결측치가 있어 전처리 시 숫자 변환 및 결측치 제거 필요
+## 🌿 Git Workflow
+
+작업 시작 전 최신 `main`을 반영
+
+```bash
+git switch main
+git pull origin main
+```
+
+새로운 Branch에서 작업
+
+```bash
+git switch -c <branch-name>
+```
+
+작업 후 Commit & Push
+
+```bash
+git add .
+git commit -m "<commit-message>"
+git push -u origin <branch-name>
+```
+
+이후 GitHub에서
+
+```text
+Pull Request → Code Review → Merge
+```
+
+순서로 `main`에 반영
 
 ---
-
-## 심화 체크포인트
-
-### 심화 1: 빌드한 이미지를 Docker Hub에 push
-**명령어**: `docker tag bitamin-mlops-1 moonchowon/bitamin-mlops-1` / `docker push moonchowon/bitamin-mlops-1`
-**결과**: Docker Hub에 `moonchowon/bitamin-mlops-1` 이미지 업로드 완료
-**pull 방법**: `docker pull moonchowon/bitamin-mlops-1`
-
-### 심화 2: .dockerignore 적용으로 이미지 용량 축소
-**명령어**: `.dockerignore` 작성 후 `docker build -t bitamin-mlops-1-v2 .`
-**결과**: 불필요 파일(캐시, git 관련 등) 제외 설정 반영
