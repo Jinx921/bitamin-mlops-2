@@ -6,7 +6,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, f1_score
 
 # 1. 데이터 로드
 df = pd.read_csv("WA_FnUseC_TelcoCustomerChurn.csv")
@@ -49,10 +49,19 @@ X_train = preprocessor.fit_transform(X_train)
 X_test = preprocessor.transform(X_test)
 
 # 6. 모델 학습
-model = LogisticRegression(max_iter=1000)
+# Logistic Regression 모델 추가
+model = LogisticRegression(
+    max_iter=1000,
+    class_weight="balanced",
+    random_state=42
+)
 model.fit(X_train, y_train)
 
 # 7. 평가
 y_pred = model.predict(X_test)
+
 acc = accuracy_score(y_test, y_pred)
+f1 = f1_score(y_test, y_pred)
+
 print(f"Accuracy: {acc:.4f}")
+print(f"F1 Score: {f1:.4f}")
