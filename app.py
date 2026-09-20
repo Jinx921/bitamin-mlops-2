@@ -1,6 +1,10 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
+# from sklearn.preprocessing import LabelEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score
 
@@ -14,22 +18,37 @@ df = df.drop(columns=["customerID"])
 df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors="coerce")
 df = df.dropna()
 
-# 4. 범주형 변수 인코딩
-categorical_cols = df.select_dtypes(include="object").columns
-for col in categorical_cols:
-    le = LabelEncoder()
-    df[col] = le.fit_transform(df[col])
-
-# 5. 입력(X)과 타깃(y) 분리
+# 4. 입력(X)과 타깃(y) 분리
 X = df.drop(columns=["Churn"])
-y = df["Churn"]
+y = df["Churn"].map({"No": 0, "Yes": 1})
 
-# 6. 학습/테스트 데이터 분리
+numeric_cols = X.select_dtypes(include=["int64", "float64"]).columns
+categorical_cols = X.select_dtypes(include=["object"]).columns
+
+numeric_transformer = Pipeline([
+    ("imputer", SimpleImputer(strategy="median")),
+    ("scaler", StandardScaler()),
+])
+
+categorical_transformer = Pipeline([
+    ("imputer", SimpleImputer(strategy="most_frequent")),
+    ("onehot", OneHotEncoder(handle_unknown="ignore")),
+])
+
+preprocessor = ColumnTransformer([
+    ("num", numeric_transformer, numeric_cols),
+    ("cat", categorical_transformer, categorical_cols),
+])
+
+# 5. 학습/테스트 데이터 분리
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42
 )
 
-# 7. 모델 학습
+X_train = preprocessor.fit_transform(X_train)
+X_test = preprocessor.transform(X_test)
+
+# 6. 모델 학습
 # Logistic Regression 모델 추가
 model = LogisticRegression(
     max_iter=1000,
@@ -38,7 +57,7 @@ model = LogisticRegression(
 )
 model.fit(X_train, y_train)
 
-# 8. 평가
+# 7. 평가
 y_pred = model.predict(X_test)
 
 acc = accuracy_score(y_test, y_pred)
