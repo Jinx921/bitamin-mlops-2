@@ -40,3 +40,7 @@ docker run --rm bitamin-mlops-week2
 branch 생성, review comment, Merge Conflict 해결은 Git 이력과 Pull Request에서 발생하는 과정이다. 이 snapshot은 모든 충돌이 해결되어 main에 통합된 **최종 코드 상태**만 제공한다.
 
 각 조는 자신의 repository에서 직접 branch와 Pull Request를 만들고, 실행 화면 및 충돌 해결 과정을 `week2/README.md`에 기록해야 한다. 이 문서를 조별 실습 증거로 그대로 제출하면 안 된다.
+
+## Week2 Result
+
+Git / GitHub 기반 협업 실습을 완료했습니다.
