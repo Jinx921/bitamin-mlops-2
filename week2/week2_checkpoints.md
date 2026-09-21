@@ -12,7 +12,7 @@ Git / GitHub 기반 협업 실습의 체크포인트를 정리합니다.
 
 | 번호 | 체크포인트 | 통과 확인 화면 | 예상 시간 |
 |---|---|---|---:|
-| 1 | 조별 Repository 개설 및 1주차 결과물 Push | GitHub에 `week1` 폴더 표시 | 7분 |
+| 1 | 조별 Repository 개설 및 1주차 결과물 Push | GitHub에 올린 1주차 결과물 표시 | 7분 |
 | 2 | 조원 전원이 각자 Branch 생성 후 작업 | Branch 목록에 4개 이상 표시 | 5분 |
 | 3 | 조원 전원이 PR 생성 및 최소 1건 Review Comment 작성 | PR 목록 및 Review Comment 화면 | 10분 |
 | 4 | 모든 PR Merge 완료 | Merge 완료된 PR 화면 | 5분 |
@@ -44,7 +44,7 @@ Git / GitHub 기반 협업 실습의 체크포인트를 정리합니다.
 - Repository 이름: `bitamin-mlops-{조번호}`
 - Public Repository로 생성
 - 1주차 결과물을 조별 Repository에 Push
-- GitHub에서 `week1` 폴더가 표시되는지 확인
+- GitHub에서 1주차 결과물 파일들이 표시되는지 확인
 
 ### 필수 2. Branch 기반 작업
 
