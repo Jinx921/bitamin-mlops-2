@@ -47,8 +47,15 @@ def load_data(path: Path) -> tuple[pd.DataFrame, pd.Series]:
 
 def build_preprocessor(X: pd.DataFrame) -> ColumnTransformer:
     """수치형과 범주형 컬럼에 서로 다른 전처리를 적용한다."""
-    categorical_columns = X.select_dtypes(include=["object", "category"]).columns
-    numeric_columns = X.select_dtypes(exclude=["object", "category"]).columns
+    categorical_columns = X.select_dtypes(include=["object", "category"]).columns.tolist()
+
+    # SeniorCitizen은 dtype상 수치형이지만 실제로는 이진 범주형 변수다.
+    if "SeniorCitizen" in X.columns:
+        categorical_columns.append("SeniorCitizen")
+
+    numeric_columns = X.select_dtypes(exclude=["object", "category"]).columns.difference(
+        categorical_columns
+    )
 
     numeric_pipeline = Pipeline(
         steps=[
@@ -59,7 +66,14 @@ def build_preprocessor(X: pd.DataFrame) -> ColumnTransformer:
     categorical_pipeline = Pipeline(
         steps=[
             ("imputer", SimpleImputer(strategy="most_frequent")),
-            ("onehot", OneHotEncoder(handle_unknown="ignore")),
+            ("onehot", OneHotEncoder(drop="first", handle_unknown="ignore")),
+        ]
+    )
+
+    return ColumnTransformer(
+        transformers=[
+            ("numeric", numeric_pipeline, numeric_columns),
+            ("categorical", categorical_pipeline, categorical_columns),
         ]
     )
 
