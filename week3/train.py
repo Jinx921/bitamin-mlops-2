@@ -23,7 +23,10 @@ from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_sc
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
+import wandb
 
+ENTITY = 'saranghan0219-sungkyunkwan-university'
+PROJECT = "bitamin17-week3-churn"
 ROOT = Path(__file__).resolve().parent.parent  # 조별 repo 최상위 폴더
 DATA_PATH = ROOT / "WA_FnUseC_TelcoCustomerChurn.csv"
 SPLIT_SEED = 42  # 데이터 분할 seed는 모든 실험에서 고정 (모델 seed와 분리)
@@ -138,12 +141,40 @@ def main():
     params = get_params(args)
     print(f"model={args.model} seed={args.seed} params={params}")
 
+    run = wandb.init(
+        entity=ENTITY,
+        project=PROJECT,
+        name=make_run_name(args.model, params),
+        group=args.model,
+        config={"model": args.model, "seed": args.seed, **params},
+        )
     # 6. 학습 및 valid 평가
     model = build_model(args.model, params, args.seed, X_train)
     model.fit(X_train, y_train)
 
+    train_metrics = evaluate(model, X_train, y_train)
+    print_metrics("train", train_metrics)
+
     valid_metrics = evaluate(model, X_valid, y_valid)
     print_metrics("valid", valid_metrics)
+
+    run.log({
+        **{f"train/{k}": v for k, v in train_metrics.items()},
+        **{f"valid/{k}": v for k, v in valid_metrics.items()},
+        "gap/roc_auc": train_metrics["roc_auc"] - valid_metrics["roc_auc"],
+        })
+    valid_pred = model.predict(X_valid)
+    valid_proba = model.predict_proba(X_valid)
+    run.log({
+        "plots/confusion_matrix": wandb.plot.confusion_matrix(
+        y_true=y_valid.tolist(), preds=valid_pred.tolist(), class_names=["stay",
+        "churn"]
+        ),
+        "plots/roc_curve": wandb.plot.roc_curve(
+        y_valid.tolist(), valid_proba.tolist(), labels=["stay", "churn"], classes_to_plot=[1]
+        ),
+    })
+    run.finish()
 
 
 if __name__ == "__main__":
