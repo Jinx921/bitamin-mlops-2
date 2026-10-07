@@ -11,6 +11,9 @@
     python week3/train.py --model rf --max_depth 6
     python week3/train.py --model gb --learning_rate 0.05 --n_estimators 300
 """
+import wandb
+ENTITY = "saranghan0219-sungkyunkwan-university"
+PROJECT = "bitamin17-week3-churn"
 import argparse
 from pathlib import Path
 
@@ -135,15 +138,50 @@ def print_metrics(title, metrics):
 def main():
     args = parse_args()
     X_train, X_valid, X_test, y_train, y_valid, y_test = load_splits()
+
     params = get_params(args)
     print(f"model={args.model} seed={args.seed} params={params}")
 
-    # 6. 학습 및 valid 평가
+    # 1. W&B run 시작
+    run = wandb.init(
+        group=args.model,
+        entity=ENTITY,
+        project=PROJECT,
+        name=make_run_name(args.model, params),
+        config={"model": args.model, "seed": args.seed, **params},
+    )
+
+    # 2. 모델 생성 및 학습
     model = build_model(args.model, params, args.seed, X_train)
     model.fit(X_train, y_train)
 
+    # 3. train 평가
+    train_metrics = evaluate(model, X_train, y_train)
+    print_metrics("train", train_metrics)
+
+    # 4. valid 평가
     valid_metrics = evaluate(model, X_valid, y_valid)
     print_metrics("valid", valid_metrics)
+
+    # 5. W&B에 기록
+    run.log({
+        **{f"train/{k}": v for k, v in train_metrics.items()},
+        **{f"valid/{k}": v for k, v in valid_metrics.items()},
+        "gap/roc_auc": train_metrics["roc_auc"] - valid_metrics["roc_auc"],
+    })
+
+    # 6. run 종료
+    valid_pred = model.predict(X_valid)
+    valid_proba = model.predict_proba(X_valid)
+    run.log({
+       "plots/confusion_matrix": wandb.plot.confusion_matrix(
+           y_true=y_valid.tolist(), preds=valid_pred.tolist(), class_names=["stay", "churn"]
+       ),
+       "plots/roc_curve": wandb.plot.roc_curve(
+           y_valid.tolist(), valid_proba.tolist(), labels=["stay", "churn"], classes_to_plot=[1]
+       ),
+   })
+    run.finish()
 
 
 if __name__ == "__main__":
