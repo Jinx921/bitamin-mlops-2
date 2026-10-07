@@ -12,6 +12,8 @@
     python week3/train.py --model gb --learning_rate 0.05 --n_estimators 300
 """
 import argparse
+import wandb
+import joblib
 from pathlib import Path
 
 import pandas as pd
@@ -24,9 +26,13 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
+
+ENTITY = "saranghan0219-sungkyunkwan-university"
+PROJECT = "bitamin17-week3-churn"
 ROOT = Path(__file__).resolve().parent.parent  # 조별 repo 최상위 폴더
 DATA_PATH = ROOT / "WA_FnUseC_TelcoCustomerChurn.csv"
 SPLIT_SEED = 42  # 데이터 분할 seed는 모든 실험에서 고정 (모델 seed와 분리)
+MODEL_PATH = ROOT / "models" / "churn_model.joblib"
 
 
 # 1. 실행 인자: 코드를 고치지 않고 실험 조건만 바꿔서 실행
@@ -39,7 +45,8 @@ def parse_args():
     p.add_argument("--n_estimators", type=int, default=200)           # rf, gb: 트리 개수
     p.add_argument("--max_depth", type=int, default=None)             # rf: 기본 제한 없음 / gb: 기본 3
     p.add_argument("--min_samples_leaf", type=int, default=1)         # rf: 잎 노드 최소 샘플 수
-    p.add_argument("--learning_rate", type=float, default=0.1)        # gb: 학습률
+    p.add_argument("--learning_rate", type=float, default=0.1) 
+    p.add_argument("--save", action="store_true")       # gb: 학습률
     return p.parse_args()
 
 
@@ -138,12 +145,56 @@ def main():
     params = get_params(args)
     print(f"model={args.model} seed={args.seed} params={params}")
 
+    run = wandb.init(
+    entity=ENTITY,
+    project=PROJECT,
+    name=make_run_name(args.model, params),
+    group=args.model,
+    config={"model": args.model, "seed": args.seed, **params},
+    )
+
     # 6. 학습 및 valid 평가
     model = build_model(args.model, params, args.seed, X_train)
     model.fit(X_train, y_train)
 
+    train_metrics = evaluate(model, X_train, y_train)
+    print_metrics("train", train_metrics)
+
+
     valid_metrics = evaluate(model, X_valid, y_valid)
     print_metrics("valid", valid_metrics)
+
+    run.log({
+    **{f"train/{k}": v for k, v in train_metrics.items()},
+    **{f"valid/{k}": v for k, v in valid_metrics.items()},
+    "gap/roc_auc": train_metrics["roc_auc"] - valid_metrics["roc_auc"],
+    })
+    valid_pred = model.predict(X_valid)
+    valid_proba = model.predict_proba(X_valid)
+    run.log({
+    "plots/confusion_matrix": wandb.plot.confusion_matrix(
+    y_true=y_valid.tolist(), preds=valid_pred.tolist(), class_names=["stay", "churn"]
+    ),
+    "plots/roc_curve": wandb.plot.roc_curve(
+    y_valid.tolist(), valid_proba.tolist(), labels=["stay", "churn"], classes_to_plot=[1]
+    ),
+    })
+    if args.save:
+        final_model = build_model(args.model, params, args.seed, X_train)
+        final_model.fit(pd.concat([X_train, X_valid]), pd.concat([y_train, y_valid]))
+        test_metrics = evaluate(final_model, X_test, y_test)
+        print_metrics("test", test_metrics)
+        run.log({f"test/{k}": v for k, v in test_metrics.items()})
+        MODEL_PATH.parent.mkdir(exist_ok=True)
+        joblib.dump(final_model, MODEL_PATH)
+        print(f"saved: {MODEL_PATH.relative_to(ROOT)}")
+        artifact = wandb.Artifact("churn-model", type="model",
+        metadata={"model": args.model, **params})
+        artifact.add_file(str(MODEL_PATH))
+        run.log_artifact(artifact)
+
+    run.finish()
+
 
 
 if __name__ == "__main__":
