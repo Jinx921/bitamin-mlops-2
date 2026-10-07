@@ -47,3 +47,25 @@ git diff solution-step1 solution-step2               # STEP 1 → 2에서 바뀐
 ```
 
 API Key는 코드·README·커밋에 넣지 않습니다. `wandb login`으로만 인증합니다.
+
+## Checkpoint 01
+
+![Checkpoint 01](captures/Checkpoint01.png)
+
+## Checkpoint 02
+
+![Checkpoint 02](captures/Checkpoint02.png)
+
+## Checkpoint 03
+
+![Checkpoint 03 - 1](captures/Checkpoint03-1.png)
+
+![Checkpoint 03 - 2](captures/Checkpoint03-2.png)
+
+## Checkpoint 04
+
+![Checkpoint 04](captures/Checkpoint04.png)
+
+## Checkpoint 05
+
+![Checkpoint 05](captures/Checkpoint05.png)
