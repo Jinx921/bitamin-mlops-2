@@ -15,7 +15,13 @@
 ![CP3](captures/cp3.png)
 
 ## Checkpoint 04
+
 ![Actions test와 build 성공](captures/cp4.png)
 
 https://github.com/Jinx921/bitamin-mlops-2/actions/runs/44287538070
+
 ## Checkpoint 05
+
+![CP5-1](captures/cp5-1.png)
+![CP5-2](captures/cp5-2.png)
+![CP5-3](captures/cp5-3.png)
