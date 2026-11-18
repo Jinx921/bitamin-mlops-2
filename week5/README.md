@@ -15,5 +15,5 @@
 ![CP3](captures/cp3.png)
 
 ## Checkpoint 04
-
+![Actions test와 build 성공](captures/cp4.png)
 ## Checkpoint 05
