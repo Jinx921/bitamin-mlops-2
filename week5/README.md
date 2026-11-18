@@ -12,6 +12,8 @@
 
 ## Checkpoint 03
 
+![CP3](captures/cp3.png)
+
 ## Checkpoint 04
 
 ## Checkpoint 05
