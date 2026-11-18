@@ -8,6 +8,8 @@
 
 ## Checkpoint 02
 
+![CP2](captures/cp2.png)
+
 ## Checkpoint 03
 
 ## Checkpoint 04
